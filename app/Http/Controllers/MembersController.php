@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\members;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class MembersController extends Controller
 {
@@ -13,7 +14,9 @@ class MembersController extends Controller
     public function index()
     {
         $members = members::all();
-        return view('members.index', compact('members'));
+        return Inertia::render('members', [
+            'members' => $members
+        ]);
     }
 
     /**
@@ -21,7 +24,7 @@ class MembersController extends Controller
      */
     public function create()
     {
-        return view('members.create');
+        return Inertia::render('members/create');
     }
 
     /**
@@ -36,7 +39,7 @@ class MembersController extends Controller
 
         members::create($validated);
 
-        return redirect()->route('members.index');
+        return redirect()->route('members.index')->with('success', 'Member created successfully.');
     }
 
     /**
@@ -44,7 +47,9 @@ class MembersController extends Controller
      */
     public function show(members $members)
     {
-        return view('members.show', compact('members'));
+        return Inertia::render('members/show', [
+            'member' => $members
+        ]);
     }
 
     /**
@@ -52,7 +57,9 @@ class MembersController extends Controller
      */
     public function edit(members $members)
     {
-        return view('members.edit', compact('members'));
+        return Inertia::render('members/edit', [
+            'member' => $members
+        ]);
     }
 
     /**
@@ -67,7 +74,7 @@ class MembersController extends Controller
 
         $members->update($validated);
 
-        return redirect()->route('members.index');
+        return redirect()->route('members.index')->with('success', 'Member updated successfully.');
     }
 
     /**
@@ -77,6 +84,6 @@ class MembersController extends Controller
     {
         $members->delete();
 
-        return redirect()->route('members.index');
+        return redirect()->route('members.index')->with('success', 'Member deleted successfully.');
     }
 }
