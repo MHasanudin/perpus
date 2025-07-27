@@ -24,7 +24,7 @@ class BooksController extends Controller
      */
     public function create()
     {
-        return view('books.create');
+        return Inertia::render('books/create');
     }
 
     /**
@@ -41,7 +41,7 @@ class BooksController extends Controller
 
         books::create($validated);
 
-        return redirect()->route('books.index');
+        return redirect()->route('books.index')->with('success', 'Book created successfully.');
     }
 
     /**
@@ -49,7 +49,9 @@ class BooksController extends Controller
      */
     public function show(books $books)
     {
-        return view('books.show', compact('books'));
+        return Inertia::render('books/show', [
+            'book' => $books
+        ]);
     }
 
     /**
@@ -57,7 +59,9 @@ class BooksController extends Controller
      */
     public function edit(books $books)
     {
-        return view('books.edit', compact('books'));
+        return Inertia::render('books/edit', [
+            'book' => $books
+        ]);
     }
 
     /**
@@ -74,7 +78,7 @@ class BooksController extends Controller
 
         $books->update($validated);
 
-        return redirect()->route('books.index');
+        return redirect()->route('books.index')->with('success', 'Book updated successfully.');
     }
 
     /**
@@ -84,6 +88,6 @@ class BooksController extends Controller
     {
         $books->delete();
 
-        return redirect()->route('books.index');
+        return redirect()->route('books.index')->with('success', 'Book deleted successfully.');
     }
 }

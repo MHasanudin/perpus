@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title', 255);
             $table->string('author', 255);
-            $table->string('category', 20)->unique();
+            $table->string('category', 20);
             $table->integer('stock');          
             $table->timestamps();
         });
