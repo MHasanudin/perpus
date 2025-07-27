@@ -7,13 +7,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Progress } from '@/components/ui/progress';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
 import { BookModal } from '@/components/book-modal';
 import { DeleteConfirmModal } from '@/components/delete-confirm-modal';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { 
     BookOpen, 
     Plus, 
@@ -25,10 +23,7 @@ import {
     Table as TableIcon, 
     Filter,
     SortAsc,
-    SortDesc,
-    MoreHorizontal,
-    Download,
-    Upload
+    SortDesc
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -58,67 +53,9 @@ interface BooksProps {
     books: Book[];
 }
 
-// Dummy data for frontend testing
-const dummyBooks: Book[] = [
-    {
-        id: 1,
-        title: 'The Great Gatsby',
-        author: 'F. Scott Fitzgerald',
-        category: 'Fiction',
-        stock: 5,
-        created_at: '2025-07-27T00:00:00.000000Z',
-        updated_at: '2025-07-27T00:00:00.000000Z',
-    },
-    {
-        id: 2,
-        title: 'Clean Code',
-        author: 'Robert C. Martin',
-        category: 'Technology',
-        stock: 8,
-        created_at: '2025-07-27T00:00:00.000000Z',
-        updated_at: '2025-07-27T00:00:00.000000Z',
-    },
-    {
-        id: 3,
-        title: 'To Kill a Mockingbird',
-        author: 'Harper Lee',
-        category: 'Fiction',
-        stock: 3,
-        created_at: '2025-07-27T00:00:00.000000Z',
-        updated_at: '2025-07-27T00:00:00.000000Z',
-    },
-    {
-        id: 4,
-        title: 'Sapiens',
-        author: 'Yuval Noah Harari',
-        category: 'Non-Fiction',
-        stock: 6,
-        created_at: '2025-07-27T00:00:00.000000Z',
-        updated_at: '2025-07-27T00:00:00.000000Z',
-    },
-    {
-        id: 5,
-        title: 'A Brief History of Time',
-        author: 'Stephen Hawking',
-        category: 'Science',
-        stock: 2,
-        created_at: '2025-07-27T00:00:00.000000Z',
-        updated_at: '2025-07-27T00:00:00.000000Z',
-    },
-    {
-        id: 6,
-        title: 'Steve Jobs',
-        author: 'Walter Isaacson',
-        category: 'Biography',
-        stock: 0,
-        created_at: '2025-07-27T00:00:00.000000Z',
-        updated_at: '2025-07-27T00:00:00.000000Z',
-    },
-];
-
 export default function Books({ books = [] }: BooksProps) {
     const [searchTerm, setSearchTerm] = useState('');
-    const [bookList, setBookList] = useState<Book[]>(books.length > 0 ? books : dummyBooks);
+    const [bookList, setBookList] = useState<Book[]>(books);
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
     const [sortBy, setSortBy] = useState<'title' | 'author' | 'category' | 'stock'>('title');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -136,9 +73,7 @@ export default function Books({ books = [] }: BooksProps) {
 
     // Update book list when books prop changes
     useEffect(() => {
-        if (books.length > 0) {
-            setBookList(books);
-        }
+        setBookList(books);
     }, [books]);
 
     // Get unique categories for filter
@@ -174,6 +109,7 @@ export default function Books({ books = [] }: BooksProps) {
 
     // Modal handlers
     const openModal = (mode: 'create' | 'edit' | 'view', book?: Book) => {
+        console.log('Opening modal:', mode, book);
         setModalState({
             isOpen: true,
             mode,
@@ -182,6 +118,7 @@ export default function Books({ books = [] }: BooksProps) {
     };
 
     const closeModal = () => {
+        console.log('Closing modal');
         setModalState({
             isOpen: false,
             mode: 'create',
@@ -190,6 +127,7 @@ export default function Books({ books = [] }: BooksProps) {
     };
 
     const openDeleteModal = (book: Book) => {
+        console.log('Opening delete modal for book:', book);
         setDeleteModalState({
             isOpen: true,
             selectedBook: book,
@@ -197,6 +135,7 @@ export default function Books({ books = [] }: BooksProps) {
     };
 
     const closeDeleteModal = () => {
+        console.log('Closing delete modal');
         setDeleteModalState({
             isOpen: false,
             selectedBook: null,
@@ -206,44 +145,46 @@ export default function Books({ books = [] }: BooksProps) {
     // CRUD operations
     const handleCreateBook = (bookData: Partial<Book>) => {
         setLoading(true);
-        const newBook: Book = {
-            id: Math.max(...bookList.map(b => b.id), 0) + 1,
-            title: bookData.title || '',
-            author: bookData.author || '',
-            category: bookData.category || '',
-            stock: bookData.stock || 0,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-        };
         
-        setTimeout(() => {
-            setBookList(prev => [...prev, newBook]);
-            setLoading(false);
-            toast.success('Book Added', {
-                description: `"${newBook.title}" has been successfully added to your library.`
-            });
-        }, 500);
+        router.post('/books', bookData, {
+            onSuccess: () => {
+                toast.success('Book Added', {
+                    description: `"${bookData.title}" has been successfully added to your library.`
+                });
+                closeModal();
+            },
+            onError: (errors) => {
+                console.error('Error creating book:', errors);
+                toast.error('Error', {
+                    description: 'Failed to add book. Please try again.'
+                });
+            },
+            onFinish: () => setLoading(false)
+        });
     };
 
     const handleUpdateBook = (bookData: Partial<Book>) => {
         if (!modalState.selectedBook) return;
         
         setLoading(true);
-        setTimeout(() => {
-            setBookList(prev => prev.map(book => 
-                book.id === modalState.selectedBook!.id 
-                    ? { 
-                        ...book, 
-                        ...bookData, 
-                        updated_at: new Date().toISOString() 
-                    }
-                    : book
-            ));
-            setLoading(false);
-            toast.success('Book Updated', {
-                description: `"${bookData.title}" has been successfully updated.`
-            });
-        }, 500);
+        console.log('Updating book:', modalState.selectedBook.id, bookData);
+        
+        router.patch(`/books/${modalState.selectedBook.id}`, bookData, {
+            onSuccess: () => {
+                console.log('Update successful');
+                toast.success('Book Updated', {
+                    description: `"${bookData.title}" has been successfully updated.`
+                });
+                closeModal();
+            },
+            onError: (errors) => {
+                console.error('Error updating book:', errors);
+                toast.error('Error', {
+                    description: 'Failed to update book. Please try again.'
+                });
+            },
+            onFinish: () => setLoading(false)
+        });
     };
 
     const handleDeleteBook = () => {
@@ -251,16 +192,28 @@ export default function Books({ books = [] }: BooksProps) {
         
         setLoading(true);
         const deletedBook = deleteModalState.selectedBook;
-        setTimeout(() => {
-            setBookList(prev => prev.filter(book => book.id !== deleteModalState.selectedBook!.id));
-            setLoading(false);
-            toast.success('Book Deleted', {
-                description: `"${deletedBook.title}" has been successfully removed from your library.`
-            });
-        }, 500);
+        console.log('Deleting book:', deletedBook.id);
+        
+        router.delete(`/books/${deleteModalState.selectedBook.id}`, {
+            onSuccess: () => {
+                console.log('Delete successful');
+                toast.success('Book Deleted', {
+                    description: `"${deletedBook.title}" has been successfully removed from your library.`
+                });
+                closeDeleteModal();
+            },
+            onError: (errors) => {
+                console.error('Error deleting book:', errors);
+                toast.error('Error', {
+                    description: 'Failed to delete book. Please try again.'
+                });
+            },
+            onFinish: () => setLoading(false)
+        });
     };
 
     const handleSave = (bookData: Partial<Book>) => {
+        console.log('handleSave called with mode:', modalState.mode, 'data:', bookData);
         if (modalState.mode === 'create') {
             handleCreateBook(bookData);
         } else if (modalState.mode === 'edit') {
@@ -276,6 +229,15 @@ export default function Books({ books = [] }: BooksProps) {
             'Technology': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
             'History': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
             'Biography': 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
+            'Fantasy': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+            'Mystery': 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
+            'Romance': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+            'Horror': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+            'Comics': 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200',
+            'Children': 'bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200',
+            'Young Adult': 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
+            'Self-Help': 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
+            'Cookbook': 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
         };
         return colors[category] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
     };
