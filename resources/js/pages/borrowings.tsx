@@ -180,7 +180,7 @@ export default function Borrowings({ borrowings: initialBorrowings }: Borrowings
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold">Peminjaman Buku</h1>
+                        <h1 className="text-3xl font-bold">Peminjaman Buku Perpustakaan</h1>
                         <p className="text-muted-foreground">
                             Kelola peminjaman dan pengembalian buku perpustakaan
                         </p>
